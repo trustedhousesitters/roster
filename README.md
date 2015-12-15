@@ -1,2 +1,3 @@
-# dsd
-Dynamodb Service Discovery
+# Roster
+
+Simple Service Discovery using Dynamodb
