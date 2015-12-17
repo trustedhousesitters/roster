@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/rand"
 	"net"
+	"os"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -68,7 +69,21 @@ type WebServiceConfig struct {
 }
 
 func (wsc WebServiceConfig) GetConfig() *aws.Config {
-	return aws.NewConfig().WithRegion(wsc.Region)
+
+	//Explicitley set
+	region := wsc.Region
+
+	// Environment var
+	if region == "" {
+		region = os.Getenv("AWS_REGION")
+	}
+
+	// Default
+	if region == "" {
+		region = "us-west-2"
+	}
+	
+	return aws.NewConfig().WithRegion(region)
 }
 
 type LocalConfig struct {
