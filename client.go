@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	HeartbeatInterval = 300 * time.Millisecond
+	HeartbeatInterval = 1000 * time.Millisecond
 )
 
 var (
@@ -59,7 +59,7 @@ func (bc BaseConfig) GetTTL() int64 {
 		return bc.TTL
 	} else {
 		// Default
-		return 30
+		return 5
 	}
 }
 
@@ -82,7 +82,7 @@ func (wsc WebServiceConfig) GetConfig() *aws.Config {
 	if region == "" {
 		region = "us-west-2"
 	}
-	
+
 	return aws.NewConfig().WithRegion(region)
 }
 
