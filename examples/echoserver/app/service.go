@@ -1,5 +1,4 @@
 // Echo server - based on https://github.com/hirolovesbeer/golang-memo/blob/master/echo-server.go
-// Set ENV var export DYNAMODB_LOCAL_ENDPOINT=http://192.168.99.101:8000
 
 package main
 
@@ -20,21 +19,14 @@ const (
 )
 
 func main() {
-
-    //Check to see if running Dynamodb Locally or in AWS
-    var client *roster.Client
-    if dle := os.Getenv("DYNAMODB_LOCAL_ENDPOINT"); dle != "" {
-        client = roster.NewClient(roster.LocalConfig{Endpoint: dle})
-    } else {
-        client = roster.NewClient(roster.WebServiceConfig{})
-    }
+    client := roster.NewClient(roster.ClientConfig{})
 
     CONN_HOST,err := client.GetLocalIP()
     if err != nil {
         log.Fatalln(err)
     }
 
-    endpoint := &url.URL{Scheme: CONN_TYPE, Host: CONN_HOST + CONN_PORT}
+    endpoint := &url.URL{Scheme: CONN_TYPE, Host: CONN_HOST + ":" + CONN_PORT}
 
     service,err := client.Register("echo",endpoint.String())
     if err != nil {
@@ -68,12 +60,17 @@ func main() {
             for {
                 line, _, e := reader.ReadLine()
                 if e != nil {
-                    conn.Close()
-                    return
+                    break
                 }
                 log.Printf("> %s\n", line)
-
             }
+
+            _, err = conn.Write([]byte("Message received"))
+            if err != nil {
+                log.Fatal(err)
+            }
+
+            conn.Close()
         }(conn)
     }
 }

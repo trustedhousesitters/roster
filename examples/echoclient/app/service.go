@@ -8,56 +8,56 @@ import (
     "log"
     "os"
     "net/url"
+    "time"
     "github.com/trustedhousesitters/roster"
 )
 
 func main() {
+    client := roster.NewClient(roster.ClientConfig{})
 
-    //Check to see if running Dynamodb Locally or in AWS
-    var client *roster.Client
-    if dle := os.Getenv("DYNAMODB_LOCAL_ENDPOINT"); dle != "" {
-        client = roster.NewClient(roster.LocalConfig{Endpoint: dle})
-    } else {
-        client = roster.NewClient(roster.WebServiceConfig{})
+    // Send a message every 3 seconds
+    for {
+        service,err := client.Discover("echo")
+        if err != nil {
+            log.Fatalln(err)
+        }
+
+        u, err := url.Parse(service.Endpoint)
+    	if err != nil {
+    		log.Fatal(err)
+    	}
+
+        strEcho := "Hello echo service"
+
+        tcpAddr, err := net.ResolveTCPAddr("tcp", u.Host)
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        conn, err := net.DialTCP("tcp", nil, tcpAddr)
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        _, err = conn.Write([]byte(strEcho))
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        log.Println("Write to server = ", strEcho)
+
+        reply := make([]byte, 1024)
+
+        _, err = conn.Read(reply)
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        log.Println("Reply from server=", string(reply))
+
+        conn.Close()
+
+        time.Sleep(3  * time.Second)
     }
 
-    service,err := client.Discover("echo")
-    if err != nil {
-        log.Fatalln(err)
-    }
-
-    u, err := url.Parse(service.Endpoint)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-    strEcho := "Hello echo service"
-
-    tcpAddr, err := net.ResolveTCPAddr("tcp", u.Host)
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    conn, err := net.DialTCP("tcp", nil, tcpAddr)
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    _, err = conn.Write([]byte(strEcho))
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    log.Println("Write to server = ", strEcho)
-
-    reply := make([]byte, 1024)
-
-    _, err = conn.Read(reply)
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    log.Println("Reply from server=", string(reply))
-
-    conn.Close()
 }

@@ -14,6 +14,7 @@ import (
 
 const (
 	HeartbeatInterval = 1000 * time.Millisecond
+	ServiceTTL = 5
 )
 
 var (
@@ -25,53 +26,36 @@ type Service struct {
 	Name string
 	Endpoint string
 	Expiry int64
-	stopHeatbeat chan bool
+	stopHeartbeat chan bool
 }
 
 // Unregister the service
 func (s *Service) Unregister() {
-	s.stopHeatbeat <- true
+	s.stopHeartbeat <- true
+
+	// Pause (block) for connections to drain
+	time.Sleep(ServiceTTL * time.Second)
 }
 
-type ClientConfiger interface {
-	GetConfig() *aws.Config
-	GetRegistryName() *string
-	GetTTL() int64
-}
-
-type BaseConfig struct {
+type ClientConfig struct {
 	RegistryName string
-	TTL int64
-}
-
-func (bc BaseConfig) GetRegistryName() *string {
-	if bc.RegistryName != "" {
-		return aws.String(bc.RegistryName)
-	} else {
-		// Default
-		return aws.String("dsd")
-	}
-}
-
-// Returns the TTL in seconds
-func (bc BaseConfig) GetTTL() int64 {
-	if bc.TTL != 0 {
-		return bc.TTL
-	} else {
-		// Default
-		return 5
-	}
-}
-
-type WebServiceConfig struct {
-	BaseConfig
 	Region string
+	Endpoint string
 }
 
-func (wsc WebServiceConfig) GetConfig() *aws.Config {
+func (cc ClientConfig) GetRegistryName() *string {
+	if cc.RegistryName != "" {
+		return aws.String(cc.RegistryName)
+	} else {
+		// Default
+		return aws.String("roster")
+	}
+}
+
+func (cc ClientConfig) GetConfig() *aws.Config {
 
 	//Explicitley set
-	region := wsc.Region
+	region := cc.Region
 
 	// Environment var
 	if region == "" {
@@ -83,26 +67,31 @@ func (wsc WebServiceConfig) GetConfig() *aws.Config {
 		region = "us-west-2"
 	}
 
-	return aws.NewConfig().WithRegion(region)
-}
+	// Create AWS config
+	config := aws.NewConfig().WithRegion(region)
 
-type LocalConfig struct {
-	BaseConfig
-	Endpoint string
-}
+	// Check to see if DynamoDB is running locally
+	endpoint := cc.Endpoint
+	if endpoint == "" {
+		endpoint = os.Getenv("DYNAMODB_ENDPOINT")
+	}
 
-func (lc LocalConfig) GetConfig() *aws.Config {
-	return aws.NewConfig().WithRegion("us-west-2").WithEndpoint(lc.Endpoint)
+	if endpoint == "" {
+		return config
+	} else {
+		return config.WithEndpoint(endpoint)
+	}
+
 }
 
 type Client struct {
-	config ClientConfiger
+	config ClientConfig
 	svc *dynamodb.DynamoDB
 	Registry *Registry
 
 }
 
-func NewClient(config ClientConfiger) *Client {
+func NewClient(config ClientConfig) *Client {
 	svc := dynamodb.New(session.New(), config.GetConfig())
 	Registry := NewRegistry(svc,config.GetRegistryName())
 
@@ -110,7 +99,7 @@ func NewClient(config ClientConfiger) *Client {
 }
 
 // Register the service in the registry
-func (c *Client) Register(name string, endpoint string, serviceTTL ...int64) (*Service,error) {
+func (c *Client) Register(name string, endpoint string) (*Service,error) {
 
 	// Check whether the registry has been previously created. If not create before registration.
 	if exists,err := c.Registry.Exists(); err != nil {
@@ -121,19 +110,13 @@ func (c *Client) Register(name string, endpoint string, serviceTTL ...int64) (*S
 		}
 	}
 
-	// If TTL not passed in then use default
-	TTL := c.config.GetTTL()
-	if len(serviceTTL) > 0 {
-    	TTL = serviceTTL[0]
-  	}
-
 	// Create Service
-	service := &Service{Name: name, Endpoint: endpoint, stopHeatbeat: make(chan bool)}
+	service := &Service{Name: name, Endpoint: endpoint, stopHeartbeat: make(chan bool)}
 
 	// Heartbeat function - updates expiry
-	heatbeat := func() {
+	heartbeat := func() {
 		// Update service Expiry based on TTL and current time
-		service.Expiry = time.Now().Unix() + TTL
+		service.Expiry = time.Now().Unix() + ServiceTTL
 
 		// Update service entry in registry
 		if av, err := dynamodbattribute.ConvertToMap(*service); err != nil {
@@ -151,20 +134,20 @@ func (c *Client) Register(name string, endpoint string, serviceTTL ...int64) (*S
 	}
 
 	// Ensure call heartbeat at least once
-	heatbeat()
+	heartbeat()
 
 	// Start goroutine to send heartbeat
 	go func() {
 	    for {
 			select {
-				case <- service.stopHeatbeat:
+				case <- service.stopHeartbeat:
 					return
 		        default:
 					// Pause for interval
 					time.Sleep(HeartbeatInterval)
 
 					// Call heartbeat function
-					heatbeat()
+					heartbeat()
 		    }
 	    }
 	}()

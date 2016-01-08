@@ -6,29 +6,32 @@ import (
     "net/url"
 )
 
-// Create a client to local dynamodb
-var c2 = NewClient(LocalConfig{Endpoint: "http://192.168.99.101:8000",BaseConfig: BaseConfig{RegistryName: "roster_client_test"}})
-
 // Setup
 func init() {
-	DeleteTestRegistry(c2)
+	client := NewConfiguredClient("roster_client_test")
+	DeleteTestRegistry(client)
+}
+
+func NewConfiguredClient(registryName string) *Client {
+	return NewClient(ClientConfig{RegistryName: registryName})
 }
 
 func TestRegister(t *testing.T) {
+	client := NewConfiguredClient("roster_client_test")
 
-    localIp,err := c2.GetLocalIP()
+    localIp,err := client.GetLocalIP()
     if err != nil {
         t.Error(err)
     }
 
     endpoint := &url.URL{Scheme: "http", Host: localIp + ":8889"}
 
-    service,err := c2.Register("test-service",endpoint.String())
+    service,err := client.Register("test-service",endpoint.String())
     if err != nil {
         t.Error(err)
     }
 
-    if _,err := c2.Discover("test-service"); err != nil {
+    if _,err := client.Discover("test-service"); err != nil {
         t.Error(err)
     }
 
@@ -36,25 +39,26 @@ func TestRegister(t *testing.T) {
 }
 
 func TestUnregister(t *testing.T) {
+	client := NewConfiguredClient("roster_client_test")
 
-    localIp,err := c2.GetLocalIP()
+    localIp,err := client.GetLocalIP()
     if err != nil {
         t.Error(err)
     }
 
     endpoint := &url.URL{Scheme: "http", Host: localIp + ":8889"}
 
-    service,err := c2.Register("test-service",endpoint.String(),5)
+    service,err := client.Register("test-service",endpoint.String())
     if err != nil {
         t.Error(err)
     }
 
     service.Unregister()
 
-    // TTL set to 5 seconds, so wait 6 seconds to see if expired
+    // TTL is set to 5 seconds, so wait 6 seconds to see if expired
     time.Sleep(6 * time.Second)
 
-    if _,err := c2.Discover("test-service"); err == nil {
+    if _,err := client.Discover("test-service"); err == nil {
         t.Error("Service not unregistering")
     }
 
