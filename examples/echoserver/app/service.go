@@ -53,24 +53,17 @@ func main() {
     for {
         conn, _ := ln.Accept()
         go func(conn net.Conn) {
+
             //logs an incoming message
             log.Printf("Received message %s -> %s \n", conn.RemoteAddr(), conn.LocalAddr())
-
             reader := bufio.NewReader(conn)
             for {
-                line, _, e := reader.ReadLine()
-                if e != nil {
+                line, err := reader.ReadBytes('\n')
+                if err != nil { // EOF, or worse
                     break
                 }
-                log.Printf("> %s\n", line)
+                conn.Write(line)
             }
-
-            _, err = conn.Write([]byte("Message received"))
-            if err != nil {
-                log.Fatal(err)
-            }
-
-            conn.Close()
         }(conn)
     }
 }

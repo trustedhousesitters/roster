@@ -6,7 +6,6 @@ package main
 import (
     "net"
     "log"
-    "os"
     "net/url"
     "time"
     "github.com/trustedhousesitters/roster"
@@ -27,7 +26,7 @@ func main() {
     		log.Fatal(err)
     	}
 
-        strEcho := "Hello echo service"
+        strEcho := "Hello echo service\n"
 
         tcpAddr, err := net.ResolveTCPAddr("tcp", u.Host)
         if err != nil {
