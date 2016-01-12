@@ -73,7 +73,8 @@ func (cc ClientConfig) GetConfig() *aws.Config {
 	// Check to see if DynamoDB is running locally
 	endpoint := cc.Endpoint
 	if endpoint == "" {
-		endpoint = os.Getenv("DYNAMODB_ENDPOINT")
+		// Env variable must be this format for Docker Compose to work
+		endpoint = os.Getenv("DYNAMODB_PORT")
 	}
 
 	if endpoint == "" {

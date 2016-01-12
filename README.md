@@ -15,7 +15,7 @@ The easiest way to get a local instance of Dynamodb running is to pull down [thi
 
 1. `docker pull tutum/dynamodb`
 2. `docker run -d -p 5000:5000 tutum/dynamodb`
-3. 'export DYNAMODB_ENDPOINT=http://$(docker-machine ip default):5000'
+3. 'export DYNAMODB_PORT=http://$(docker-machine ip default):5000'
 4. Run your Go app.
 
 ## Contributing
@@ -28,4 +28,4 @@ The easiest way to get a local instance of Dynamodb running is to pull down [thi
 
 ### Running tests
 
-`go test` will run tests. By default the tests will connect to the Amazon hosted Dynamodb in the default region. You can override the region by setting `AWS_REGION` environment variable as per the [AWS SDK](https://github.com/aws/aws-sdk-go). Also if the `DYNAMODB_ENDPOINT` environment variable is set, tests will be run against the local dynamodb instance.
+`go test` will run tests. By default the tests will connect to the Amazon hosted Dynamodb in the default region. You can override the region by setting `AWS_REGION` environment variable as per the [AWS SDK](https://github.com/aws/aws-sdk-go). Also if the `DYNAMODB_PORT` environment variable is set, tests will be run against the local dynamodb instance.
