@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strings"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -73,8 +74,9 @@ func (cc ClientConfig) GetConfig() *aws.Config {
 	// Check to see if DynamoDB is running locally
 	endpoint := cc.Endpoint
 	if endpoint == "" {
-		// Env variable must be this format for Docker Compose to work
+		// Env variable must be this format for Docker Compose to work, and also must replace tcp with http
 		endpoint = os.Getenv("DYNAMODB_PORT")
+		endpoint = strings.Replace(endpoint, "tcp", "http", 1)
 	}
 
 	if endpoint == "" {
