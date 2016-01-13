@@ -4,10 +4,14 @@ Instead of having to manage a separate distributed key store like etcd or ZooKee
 
 As the only dependency is Dynamodb, it has the added benefit of allowing service discovery between applications running on EC2 and dockerized applications running within ECS.
 
+## Another service discovery tool...why??
+
+Wanting to leverage as much of the managed AWS services as possible - less to go wrong (hopefully). Also a good exercise in using the AWS SDK for Go - there's not many examples out there using Dyanamodb from Go using the offical SDK, so seemed like a good project to try it out.
+
 ## Requirements
 
 1. Go 1.5 or above
-2. AWS credentials setup as per [AWS SDK documentation](https://github.com/aws/aws-sdk-go)
+2. AWS credentials setup as per [AWS SDK documentation](https://github.com/aws/aws-sdk-go). It seems the Go SDK needs credentials even for 100% local access; however these can be dummy values (see the example Docker Compose yml file.)
 
 ## Usage
 
