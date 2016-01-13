@@ -1,0 +1,29 @@
+server1:
+  build: ./echoserver/
+  ports:
+    - "3333:3333"
+  links:
+    - dynamodb
+  environment:
+    - AWS_ACCESS_KEY_ID=AKID1234567890
+    - AWS_SECRET_ACCESS_KEY=MY-SECRET-KEY
+server2:
+  build: ./echoserver/
+  ports:
+    - "3334:3333"
+  links:
+    - dynamodb
+  environment:
+    - AWS_ACCESS_KEY_ID=AKID1234567890
+    - AWS_SECRET_ACCESS_KEY=MY-SECRET-KEY
+client:
+  build: ./echoclient/
+  links:
+    - dynamodb
+  environment:
+    - AWS_ACCESS_KEY_ID=AKID1234567890
+    - AWS_SECRET_ACCESS_KEY=MY-SECRET-KEY
+dynamodb:
+  image: tutum/dynamodb
+  ports:
+    - "8000:8000"

@@ -17,7 +17,10 @@ func main() {
     // Send a message every 3 seconds
     for {
         service,err := client.Discover("echo")
-        if err != nil {
+        if err == ErrRegistryNotActive {
+            // Waiting for registry to become active - in production would probably want to only retry N number of times
+            continue
+        } else if err != nil {
             log.Fatalln(err)
         }
 

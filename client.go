@@ -161,43 +161,48 @@ func (c *Client) Register(name string, endpoint string) (*Service,error) {
 // Query the registry for named service
 func (c *Client) Discover(name string) (*Service, error) {
 
-	expressionAttributeValues := map[string]interface{}{
-    	":NameVal": name,
-    	":ExpiryVal":   time.Now().Unix(),
-	}
+	// Make sure registry is active
+	if c.Registry.isActive() {
+		expressionAttributeValues := map[string]interface{}{
+	    	":NameVal": name,
+	    	":ExpiryVal":   time.Now().Unix(),
+		}
 
-	ean := map[string]*string{
-    	"#N": aws.String("Name"),
-	}
+		ean := map[string]*string{
+	    	"#N": aws.String("Name"),
+		}
 
-	eav, err := dynamodbattribute.ConvertToMap(expressionAttributeValues)
-	if err != nil {
-		return nil,err
-	}
+		eav, err := dynamodbattribute.ConvertToMap(expressionAttributeValues)
+		if err != nil {
+			return nil,err
+		}
 
-	resp, err := c.svc.Query(&dynamodb.QueryInput{
-		TableName: c.config.GetRegistryName(),
-		KeyConditionExpression: aws.String("#N = :NameVal"),
-		FilterExpression: aws.String("Expiry > :ExpiryVal"),
-		ExpressionAttributeValues: eav,
-		ExpressionAttributeNames: ean,
-	})
+		resp, err := c.svc.Query(&dynamodb.QueryInput{
+			TableName: c.config.GetRegistryName(),
+			KeyConditionExpression: aws.String("#N = :NameVal"),
+			FilterExpression: aws.String("Expiry > :ExpiryVal"),
+			ExpressionAttributeValues: eav,
+			ExpressionAttributeNames: ean,
+		})
 
-	if err != nil {
-		return nil, err
-	}
-
-	if len(resp.Items) > 0 {
-		// Randomly select one of the available endpoints (in effect load balancing between available endpoints)
-		service := Service{}
-		err = dynamodbattribute.ConvertFromMap(resp.Items[rand.Intn(len(resp.Items))], &service)
 		if err != nil {
 			return nil, err
 		}
-		return &service, nil
+
+		if len(resp.Items) > 0 {
+			// Randomly select one of the available endpoints (in effect load balancing between available endpoints)
+			service := Service{}
+			err = dynamodbattribute.ConvertFromMap(resp.Items[rand.Intn(len(resp.Items))], &service)
+			if err != nil {
+				return nil, err
+			}
+			return &service, nil
+		} else {
+			// No service found
+			return nil,ErrServiceNotFound
+		}
 	} else {
-		// No service found
-		return nil,ErrServiceNotFound
+		return nil,ErrRegistryNotActive
 	}
 }
 
