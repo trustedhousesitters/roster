@@ -15,6 +15,10 @@ Wanting to leverage as much of the managed AWS services as possible - less to go
 
 ## Usage
 
+### Examples
+
+Within the examples folder there is an example echo client and server that demonstrate basic registry and discovery. Ensuring you have Docker Compose installed, simply run `docker-compose up`. This creates 1 client and 2 instances of the server service - when one of these servers is stopped, the client should remain operational and shouldn't drop any requests.
+
 ### Using a local Dynamodb instance for development
 
 The easiest way to get a local instance of Dynamodb running is to pull down [this](https://hub.docker.com/r/tutum/dynamodb/) docker image. Then the following steps (assumes Docker Machine is being used with default name):
@@ -24,11 +28,9 @@ The easiest way to get a local instance of Dynamodb running is to pull down [thi
 3. 'export DYNAMODB_PORT=http://$(docker-machine ip default):5000'
 4. Run your Go app.
 
-### Examples
-
-Within the examples folder there is an example echo client and server that demonstrate basic registry and discovery. Ensuring you have Docker Compose installed, simply run `docker-compose up`. This creates 1 client and 2 instances of the server service - when one of these servers is stopped, the client should remain operational and shouldn't drop any requests.
-
 ## Contributing
+
+This is very much experimental at present...so please feel free to contribute any bugs (and even better PR's with fixes!)
 
 ### Installation
 
