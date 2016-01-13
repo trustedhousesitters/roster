@@ -162,7 +162,7 @@ func (c *Client) Register(name string, endpoint string) (*Service,error) {
 func (c *Client) Discover(name string) (*Service, error) {
 
 	// Make sure registry is active
-	if c.Registry.IsActive() {
+	if active,err := c.Registry.IsActive(); active == true {
 		expressionAttributeValues := map[string]interface{}{
 	    	":NameVal": name,
 	    	":ExpiryVal":   time.Now().Unix(),
