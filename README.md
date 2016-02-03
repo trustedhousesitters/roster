@@ -24,8 +24,8 @@ Within the examples folder there is an example echo client and server that demon
 The easiest way to get a local instance of Dynamodb running is to pull down [this](https://hub.docker.com/r/tutum/dynamodb/) docker image. Then the following steps (assumes Docker Machine is being used with default name):
 
 1. `docker pull tutum/dynamodb`
-2. `docker run -d -p 5000:5000 tutum/dynamodb`
-3. 'export DYNAMODB_PORT=http://$(docker-machine ip default):5000'
+2. `docker run -d -p 8000:8000 tutum/dynamodb`
+3. 'export DYNAMODB_PORT=http://$(docker-machine ip default):8000'
 4. Run your Go app.
 
 ## Contributing
